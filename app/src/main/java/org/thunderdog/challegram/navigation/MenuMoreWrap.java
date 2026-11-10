@@ -16,21 +16,28 @@ package org.thunderdog.challegram.navigation;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.ColorFilter;
+import android.graphics.Outline;
+import android.graphics.PixelFormat;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewOutlineProvider;
 import android.view.animation.Interpolator;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import org.thunderdog.challegram.R;
@@ -122,16 +129,49 @@ public class MenuMoreWrap extends MenuMoreWrapAbstract implements Animated {
     this.forcedTheme = forcedTheme;
 
     setMinimumWidth(Screen.dp(196f));
-    Drawable drawable;
-    if (forcedTheme != null) {
-      drawable = ViewSupport.getDrawableFilter(getContext(), R.drawable.bg_popup_fixed, new PorterDuffColorFilter(forcedTheme.getColor(ColorId.overlayFilling), PorterDuff.Mode.MULTIPLY));
-    } else {
-      drawable = ViewSupport.getDrawableFilter(getContext(), R.drawable.bg_popup_fixed, new PorterDuffColorFilter(Theme.headerFloatBackgroundColor(), PorterDuff.Mode.MULTIPLY));
-    }
+    // Material menu surface: rounded, inset by the same padding the legacy nine-patch reserved for its shadow
+    final int padding = Screen.dp(PADDING);
+    final float radius = Screen.dp(16f);
+    Drawable drawable = new Drawable() {
+      @Override
+      public void draw (@NonNull Canvas c) {
+        Rect bounds = getBounds();
+        RectF rectF = Paints.getRectF();
+        rectF.set(bounds.left + padding, bounds.top + padding, bounds.right - padding, bounds.bottom - padding);
+        int color = MenuMoreWrap.this.forcedTheme != null ? MenuMoreWrap.this.forcedTheme.getColor(ColorId.overlayFilling) : Theme.headerFloatBackgroundColor();
+        c.drawRoundRect(rectF, radius, radius, Paints.fillingPaint(color));
+      }
+
+      @Override
+      public boolean getPadding (@NonNull Rect outPadding) {
+        outPadding.set(padding, padding, padding, padding);
+        return true;
+      }
+
+      @Override
+      public void setAlpha (int alpha) { }
+
+      @Override
+      public void setColorFilter (@Nullable ColorFilter colorFilter) { }
+
+      @Override
+      @SuppressWarnings("deprecation")
+      public int getOpacity () {
+        return PixelFormat.TRANSLUCENT;
+      }
+    };
     ViewUtils.setBackground(this, drawable);
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+      setOutlineProvider(new ViewOutlineProvider() {
+        @Override
+        public void getOutline (View view, Outline outline) {
+          outline.setRoundRect(padding, padding, view.getWidth() - padding, view.getHeight() - padding, radius);
+        }
+      });
+      setElevation(Screen.dp(3f));
+    }
 
     if (themeProvider != null && forcedTheme == null) {
-      themeProvider.addThemeSpecialFilterListener(drawable, ColorId.overlayFilling);
       themeProvider.addThemeInvalidateListener(this);
     }
 

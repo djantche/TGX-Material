@@ -762,7 +762,7 @@ public class SettingHolder extends RecyclerView.ViewHolder {
               case ListItem.TYPE_DRAWER_ITEM_WITH_RADIO:
               case ListItem.TYPE_DRAWER_ITEM_WITH_RADIO_SEPARATED: {
                 Views.setClickable(wrap);
-                RippleSupport.setTransparentSelector(wrap);
+                RippleSupport.setInsetPillSelector(wrap);
                 item.setEnabled(false);
                 wrap.setOnClickListener(onClickListener);
 
@@ -803,7 +803,7 @@ public class SettingHolder extends RecyclerView.ViewHolder {
         }
 
         Views.setClickable(item);
-        RippleSupport.setTransparentSelector(item);
+        RippleSupport.setInsetPillSelector(item);
         item.setOnClickListener(onClickListener);
         item.setOnLongClickListener(onLongClickListener);
         return new SettingHolder(item);

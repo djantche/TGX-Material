@@ -16,6 +16,8 @@ obj
 
 /captures
 /local.properties
+/.toolchain/
+/artifacts/
 
 /tests/*/checks
 

@@ -76,8 +76,8 @@ public class TogglerView extends View implements FactorAnimator.Target, TooltipO
           outline.setRoundRect((int) (origX - origRadius), (int) (origY - origRadius), (int) (origX + origRadius), (int) (origY + origRadius), origRadius);
         }
       });
-      setElevation(Math.max(1, Screen.dp(.5f)));
-      setTranslationZ(Math.max(1, Screen.dp(.5f)));
+      setElevation(0f);
+      setTranslationZ(0f);
       ViewUtils.setBackground(this, new Drawable() {
         @Override
         public void draw (@NonNull Canvas c) {
@@ -219,32 +219,31 @@ public class TogglerView extends View implements FactorAnimator.Target, TooltipO
       fillingRect = new RectF();
     }
 
-    int start = Screen.dp(58f);
+    int start = Screen.dp(66f);
     int left = Screen.dp(4f);
-    int right = left + Screen.dp(34f);
+    int right = left + Screen.dp(52f);
 
     fillingRect.left = currentWidth - start + left;
     fillingRect.right = currentWidth - start + right;
 
-    int top = Screen.dp(20f);
-    int bottom = top + Screen.dp(14f);
+    int top = Screen.dp(8f);
+    int bottom = top + Screen.dp(32f);
 
     fillingRect.top = top;
     fillingRect.bottom = bottom;
 
-    origRadius = Screen.dpf(10f);
-    fillRadius = Screen.dp(7f);
-    float offset = Screen.dp(3f);
+    fillRadius = Screen.dp(16f);
 
-    minX = fillingRect.left - offset + origRadius;
-    maxX = fillingRect.right + offset - origRadius;
+    minX = fillingRect.left + fillRadius;
+    maxX = fillingRect.right - fillRadius;
     diffX = maxX - minX;
-    origY = fillingRect.top - offset + origRadius;
+    origY = fillingRect.centerY();
     updateOrigX();
   }
 
   private void updateOrigX () {
     float factor = this.isEnabled.getFloatValue();
+    origRadius = Screen.dpf(8f + 4f * factor);
     if (Lang.rtl()) {
       origX = factor == 0f ? maxX : factor == 1f ? minX : maxX - factor * diffX;
     } else {
@@ -283,6 +282,9 @@ public class TogglerView extends View implements FactorAnimator.Target, TooltipO
 
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
       c.drawRoundRect(fillingRect, fillRadius, fillRadius, Paints.fillingPaint(ColorUtils.fromToArgb(fromBackgroundColor, toBackgroundColor, factor * (1f - disableFactor))));
+    }
+    if (!useNegativeState && factor < 1f) {
+      c.drawRoundRect(fillingRect, fillRadius, fillRadius, Paints.getProgressPaint(ColorUtils.alphaColor(1f - factor, Theme.getColor(ColorId.inputInactive)), Screen.dp(2f)));
     }
     circlePaint.setColor(ColorUtils.fromToArgb(fromColor, toColor, factor * (1f - disableFactor)));
     c.drawCircle(origX, origY, origRadius, circlePaint);

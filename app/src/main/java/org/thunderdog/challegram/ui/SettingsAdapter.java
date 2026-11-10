@@ -35,6 +35,7 @@ import androidx.collection.SparseArrayCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import org.thunderdog.challegram.R;
 import org.thunderdog.challegram.U;
 import org.thunderdog.challegram.charts.BaseChartView;
 import org.thunderdog.challegram.charts.Chart;
@@ -1931,6 +1932,71 @@ public class SettingsAdapter extends RecyclerView.Adapter<SettingHolder> impleme
   @Override
   public void onBindViewHolder (SettingHolder holder, int position) {
     updateView(holder, position, holder.getItemViewType());
+    applyGroupShape(holder, position);
+  }
+
+  // Material grouped list: consecutive rows share one rounded container, only its outer corners are fully rounded
+
+  private static final float GROUP_OUTER_RADIUS = 24f, GROUP_INNER_RADIUS = 4f;
+
+  private static boolean isGroupedRow (int viewType) {
+    switch (viewType) {
+      case ListItem.TYPE_SETTING:
+      case ListItem.TYPE_VALUED_SETTING:
+      case ListItem.TYPE_INFO_SETTING:
+      case ListItem.TYPE_VALUED_SETTING_WITH_RADIO:
+      case ListItem.TYPE_VALUED_SETTING_RED_STUPID:
+      case ListItem.TYPE_VALUED_SETTING_COMPACT:
+      case ListItem.TYPE_VALUED_SETTING_COMPACT_WITH_COLOR:
+      case ListItem.TYPE_VALUED_SETTING_COMPACT_WITH_RADIO:
+      case ListItem.TYPE_VALUED_SETTING_COMPACT_WITH_RADIO_2:
+      case ListItem.TYPE_VALUED_SETTING_COMPACT_WITH_TOGGLER:
+      case ListItem.TYPE_VALUED_SETTING_COMPACT_WITH_CHECKBOX:
+      case ListItem.TYPE_RADIO_SETTING:
+      case ListItem.TYPE_RADIO_SETTING_WITH_NEGATIVE_STATE:
+      case ListItem.TYPE_CHECKBOX_OPTION:
+      case ListItem.TYPE_CHECKBOX_OPTION_MULTILINE:
+      case ListItem.TYPE_CHECKBOX_OPTION_REVERSE:
+      case ListItem.TYPE_CHECKBOX_OPTION_WITH_AVATAR:
+      case ListItem.TYPE_CHECKBOX_OPTION_DOUBLE_LINE:
+      case ListItem.TYPE_RADIO_OPTION:
+      case ListItem.TYPE_RADIO_OPTION_LEFT:
+      case ListItem.TYPE_RADIO_OPTION_WITH_AVATAR:
+      case ListItem.TYPE_INFO_MULTILINE:
+        return true;
+    }
+    return false;
+  }
+
+  private boolean hasGroupedNeighbor (int position, int direction) {
+    int index = position + direction;
+    while (index >= 0 && index < items.size()) {
+      int viewType = items.get(index).getViewType();
+      if (viewType != ListItem.TYPE_SEPARATOR && viewType != ListItem.TYPE_SEPARATOR_FULL) {
+        return isGroupedRow(viewType);
+      }
+      index += direction;
+    }
+    return false;
+  }
+
+  private void applyGroupShape (SettingHolder holder, int position) {
+    if (!(holder.itemView instanceof SettingView) || position < 0 || position >= items.size() || !isGroupedRow(items.get(position).getViewType())) {
+      return;
+    }
+    boolean first = !hasGroupedNeighbor(position, -1);
+    boolean last = !hasGroupedNeighbor(position, 1);
+    int shape = (first ? 1 : 0) | (last ? 2 : 0) | 4;
+    Object currentShape = holder.itemView.getTag(R.id.material_group_shape);
+    if (currentShape instanceof Integer && (Integer) currentShape == shape) {
+      return;
+    }
+    holder.itemView.setTag(R.id.material_group_shape, shape);
+    ViewGroup.LayoutParams layoutParams = holder.itemView.getLayoutParams();
+    RecyclerView.LayoutParams params = layoutParams instanceof RecyclerView.LayoutParams ? (RecyclerView.LayoutParams) layoutParams : new RecyclerView.LayoutParams(layoutParams);
+    params.setMargins(Screen.dp(16f), Screen.dp(first ? 0f : 1f), Screen.dp(16f), Screen.dp(last ? 0f : 1f));
+    holder.itemView.setLayoutParams(params);
+    holder.itemView.setBackground(Theme.fillingSelector(ColorId.chatKeyboard, first ? GROUP_OUTER_RADIUS : GROUP_INNER_RADIUS, last ? GROUP_OUTER_RADIUS : GROUP_INNER_RADIUS));
   }
 
   public void resetRecyclerScrollById (int id) {
@@ -2078,6 +2144,18 @@ public class SettingsAdapter extends RecyclerView.Adapter<SettingHolder> impleme
     ArrayUtils.move(items, fromIndex, toIndex);
     if (notify) {
       notifyItemMoved(fromIndex, toIndex);
+      refreshGroupShapes();
+    }
+  }
+
+  private void refreshGroupShapes () {
+    for (RecyclerView parentView : parentViews) {
+      for (int i = 0; i < parentView.getChildCount(); i++) {
+        RecyclerView.ViewHolder holder = parentView.getChildViewHolder(parentView.getChildAt(i));
+        if (holder instanceof SettingHolder) {
+          applyGroupShape((SettingHolder) holder, holder.getBindingAdapterPosition());
+        }
+      }
     }
   }
 
@@ -2087,6 +2165,7 @@ public class SettingsAdapter extends RecyclerView.Adapter<SettingHolder> impleme
     } else {
       ArrayUtils.move(items, fromIndex, toIndex);
       notifyItemMoved(fromIndex, toIndex);
+      refreshGroupShapes();
     }
   }
 

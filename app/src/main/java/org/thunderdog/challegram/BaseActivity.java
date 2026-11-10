@@ -1461,6 +1461,12 @@ public abstract class BaseActivity extends FragmentActivity implements View.OnTo
     if (tooltipOverlayView != null && tooltipOverlayView.handleOnBackPress(commit)) {
       return BackPressMode.CUSTOM_ACTION_PERFORMED;
     }
+    if (forceTouchView != null && forceTouchView.isPinned()) {
+      if (commit) {
+        closeForceTouch();
+      }
+      return BackPressMode.CUSTOM_ACTION_PERFORMED;
+    }
     if (dismissLastOpenWindow(false, true, fromTop, commit)) {
       return BackPressMode.CUSTOM_ACTION_PERFORMED;
     }
@@ -2234,11 +2240,31 @@ public abstract class BaseActivity extends FragmentActivity implements View.OnTo
     }
   }
 
+  public boolean pinForceTouch () {
+    if (forceTouchWindow == null || forceTouchView == null) {
+      return false;
+    }
+    final PopupLayout window = forceTouchWindow;
+    if (!forceTouchView.pin(this::closeForceTouch)) {
+      return false;
+    }
+    window.setDismissListener(popup -> {
+      if (forceTouchWindow == window) {
+        forceTouchWindow = null;
+        forceTouchView = null;
+        notifyBackPressAvailabilityChanged();
+      }
+    });
+    notifyBackPressAvailabilityChanged();
+    return true;
+  }
+
   public void closeForceTouch () {
     if (forceTouchWindow != null) {
       forceTouchWindow.hideWindow(true);
       forceTouchWindow = null;
       forceTouchView = null;
+      notifyBackPressAvailabilityChanged();
     }
   }
 

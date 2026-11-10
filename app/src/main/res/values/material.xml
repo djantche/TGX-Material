@@ -1,0 +1,4 @@
+<resources>
+  <item name="material_group_shape" type="id" />
+  <item name="btn_hideArchive" type="id" />
+</resources>

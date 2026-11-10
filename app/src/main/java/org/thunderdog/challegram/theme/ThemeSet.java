@@ -89,9 +89,9 @@ public class ThemeSet {
   private static @NonNull ThemeDelegate loadTheme (Settings prefs, @ThemeId int themeId) {
     switch (themeId) {
       case ThemeId.BLUE:
-        return new ThemeDefault();
+        return new MaterialTheme(new ThemeDefault());
       case ThemeId.CLASSIC:
-        return new ThemeClassic();
+        return new MaterialTheme(new ThemeClassic());
       case ThemeId.CYAN:
         return new ThemeCyan();
       case ThemeId.GREEN:
@@ -103,14 +103,14 @@ public class ThemeSet {
       case ThemeId.RED:
         return new ThemeRed();
       case ThemeId.WHITE_BLACK:
-        return new ThemeWhiteBlack();
+        return new MaterialTheme(new ThemeWhiteBlack());
 
       case ThemeId.NIGHT_BLUE:
-        return new ThemeNightBlue();
+        return new MaterialTheme(new ThemeNightBlue());
       case ThemeId.NIGHT_BLACK:
-        return new ThemeNightBlack();
+        return new MaterialTheme(new ThemeNightBlack());
       case ThemeId.BLACK_WHITE:
-        return new ThemeBlackWhite();
+        return new MaterialTheme(new ThemeBlackWhite());
 
       case ThemeId.NONE:
       case ThemeId.TEMPORARY:

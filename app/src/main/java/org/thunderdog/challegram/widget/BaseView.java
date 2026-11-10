@@ -395,6 +395,11 @@ public class BaseView extends SparseDrawableView implements ClickHelper.Delegate
   @Override
   public void onLongPressFinish (View view, float x, float y) {
     setInLongPress(false, x, y);
+    if (currentOpenPreview != null && UI.getContext(getContext()).pinForceTouch()) {
+      // The activity now owns the pinned preview until it is dismissed
+      currentOpenPreview = null;
+      return;
+    }
     closePreview();
   }
 

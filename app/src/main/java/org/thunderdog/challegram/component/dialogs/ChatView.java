@@ -78,9 +78,9 @@ public class ChatView extends BaseView implements TdlibSettingsManager.Preferenc
 
   public static void reset () {
     if (titlePaint != null)
-      titlePaint.setTextSize(Screen.dp(17f));
+      titlePaint.setTextSize(Screen.dp(16f));
     if (titlePaintFake != null)
-      titlePaintFake.setTextSize(Screen.dp(17f));
+      titlePaintFake.setTextSize(Screen.dp(16f));
     if (timePaint != null)
       timePaint.setTextSize(Screen.dp(12f));
   }
@@ -88,13 +88,13 @@ public class ChatView extends BaseView implements TdlibSettingsManager.Preferenc
   private static void initPaints () {
     titlePaint = new TextPaint(Paint.ANTI_ALIAS_FLAG | Paint.DITHER_FLAG);
     titlePaint.setColor(Theme.textAccentColor());
-    titlePaint.setTextSize(Screen.dp(17f));
+    titlePaint.setTextSize(Screen.dp(16f));
     titlePaint.setTypeface(Fonts.getRobotoMedium());
     ThemeManager.addThemeListener(titlePaint, ColorId.text);
 
     titlePaintFake = new TextPaint(Paint.ANTI_ALIAS_FLAG | Paint.DITHER_FLAG);
     titlePaintFake.setColor(Theme.textAccentColor());
-    titlePaintFake.setTextSize(Screen.dp(17f));
+    titlePaintFake.setTextSize(Screen.dp(16f));
     titlePaintFake.setTypeface(Fonts.getRobotoRegular());
     titlePaintFake.setFakeBoldText(true);
     ThemeManager.addThemeListener(titlePaintFake, ColorId.text);
@@ -124,12 +124,8 @@ public class ChatView extends BaseView implements TdlibSettingsManager.Preferenc
     return timePaint;
   }
 
-  private static int getTextOffset () {
-    return Screen.dp(12f);
-  }
-
   public static int getAvatarLeft (int chatListMode) {
-    return Screen.dp(/*inMultiLineMode ? 6f : */7f);
+    return Screen.dp(16f);
   }
 
   public static int getAvatarRadius (int chatListMode) {
@@ -145,7 +141,7 @@ public class ChatView extends BaseView implements TdlibSettingsManager.Preferenc
   }
 
   public static int getLeftPadding (int chatListMode) {
-    return chatListMode != Settings.CHAT_MODE_2LINE ? getAvatarLeft(chatListMode) + getAvatarSize(chatListMode) + Screen.dp(11f) : getViewHeight(chatListMode);
+    return getAvatarLeft(chatListMode) + getAvatarSize(chatListMode) + Screen.dp(16f);
   }
 
   public static int getRightPadding () {
@@ -221,9 +217,9 @@ public class ChatView extends BaseView implements TdlibSettingsManager.Preferenc
   public static int getViewHeight (int chatListMode) {
     switch (chatListMode) {
       case Settings.CHAT_MODE_3LINE_BIG:
-        return Screen.dp(82f);
+        return Screen.dp(84f);
       case Settings.CHAT_MODE_3LINE:
-        return Screen.dp(78f);
+        return Screen.dp(80f);
       case Settings.CHAT_MODE_2LINE:
       default:
         return Screen.dp(72f);
@@ -233,12 +229,12 @@ public class ChatView extends BaseView implements TdlibSettingsManager.Preferenc
   public static float getAvatarSizeDp (int chatListMode) {
     switch (chatListMode) {
       case Settings.CHAT_MODE_3LINE_BIG:
-        return 60f;
+        return 56f;
       case Settings.CHAT_MODE_3LINE:
-        return 58f;
+        return 52f;
       case Settings.CHAT_MODE_2LINE:
       default:
-        return 52f;
+        return 48f;
     }
   }
 
@@ -247,14 +243,7 @@ public class ChatView extends BaseView implements TdlibSettingsManager.Preferenc
   }
 
   private static int getAvatarTop (int chatListMode) {
-    switch (chatListMode) {
-      case Settings.CHAT_MODE_3LINE_BIG:
-        return Screen.dp(11f);
-      case Settings.CHAT_MODE_3LINE:
-      case Settings.CHAT_MODE_2LINE:
-      default:
-        return Screen.dp(10f);
-    }
+    return (getViewHeight(chatListMode) - getAvatarSize(chatListMode)) / 2;
   }
 
   private static int getTimePadding () {
@@ -264,12 +253,12 @@ public class ChatView extends BaseView implements TdlibSettingsManager.Preferenc
   private static int getCounterOffset (int chatsListMode) {
     switch (chatsListMode) {
       case Settings.CHAT_MODE_3LINE:
-        return Screen.dp(42f);
-      case Settings.CHAT_MODE_3LINE_BIG:
         return Screen.dp(44f);
+      case Settings.CHAT_MODE_3LINE_BIG:
+        return Screen.dp(46f);
       case Settings.CHAT_MODE_2LINE:
       default:
-        return Screen.dp(38f);
+        return Screen.dp(37.5f);
     }
   }
 
@@ -280,12 +269,12 @@ public class ChatView extends BaseView implements TdlibSettingsManager.Preferenc
   public static int getTextTop (int chatListMode) {
     switch (chatListMode) {
       case Settings.CHAT_MODE_3LINE:
-        return Screen.dp(32f);
+        return Screen.dp(34f);
       case Settings.CHAT_MODE_3LINE_BIG:
-        return Screen.dp(33f);
+        return Screen.dp(35f);
       case Settings.CHAT_MODE_2LINE:
       default:
-        return Screen.dp(39.5f);
+        return Screen.dp(39f);
     }
   }
 
@@ -294,46 +283,26 @@ public class ChatView extends BaseView implements TdlibSettingsManager.Preferenc
   }
 
   public static int getTitleTop (int chatListMode) {
-    switch (chatListMode) {
-      case Settings.CHAT_MODE_3LINE:
-      case Settings.CHAT_MODE_3LINE_BIG:
-        return getTextOffset() + Screen.dp(14f);
-      case Settings.CHAT_MODE_2LINE:
-      default:
-        return getTextOffset() + Screen.dp(16f);
-    }
+    return getTitleTop2(chatListMode) + Screen.dp(15f);
   }
 
   private static int getClockTop (int chatListMode) {
-    switch (chatListMode) {
-      case Settings.CHAT_MODE_3LINE:
-      case Settings.CHAT_MODE_3LINE_BIG:
-        return Screen.dp(15f);
-      case Settings.CHAT_MODE_2LINE:
-      default:
-        return Screen.dp(17f);
-    }
+    return getTitleTop2(chatListMode) + Screen.dp(5f);
   }
 
   private static int getMuteTop (int chatListMode) {
-    switch (chatListMode) {
-      case Settings.CHAT_MODE_3LINE:
-      case Settings.CHAT_MODE_3LINE_BIG:
-        return Screen.dp(9f);
-      case Settings.CHAT_MODE_2LINE:
-      default:
-        return Screen.dp(11f);
-    }
+    return getTitleTop2(chatListMode) - Screen.dp(1f);
   }
 
   public static int getTitleTop2 (int chatListMode) {
     switch (chatListMode) {
-      case Settings.CHAT_MODE_3LINE:
       case Settings.CHAT_MODE_3LINE_BIG:
-        return Screen.dp(10f);
+        return Screen.dp(13f);
+      case Settings.CHAT_MODE_3LINE:
+        return Screen.dp(12f);
       case Settings.CHAT_MODE_2LINE:
       default:
-        return Screen.dp(12f);
+        return Screen.dp(14f);
     }
   }
 
@@ -577,6 +546,12 @@ public class ChatView extends BaseView implements TdlibSettingsManager.Preferenc
       c.drawColor(ColorUtils.alphaColor(.8f, Theme.fillingColor()));
     }
 
+    // Center the text block vertically when the message preview fits on a single line
+    final Text previewText = chat.getText();
+    final int centerShift = chatListMode != Settings.CHAT_MODE_2LINE && chat.getPrefix() == null && previewText != null && previewText.getLineCount() == 1 ? Screen.dp(7f) : 0;
+    final int centerSaveCount = Views.save(c);
+    c.translate(0, centerShift);
+
     c.drawText(chat.getTime(), (rtl ? viewWidth - chat.getTimeLeft() - chat.getTimeWidth() : chat.getTimeLeft()), getTitleTop(chatListMode), timePaint);
 
     Text title = chat.getTitle();
@@ -726,6 +701,8 @@ public class ChatView extends BaseView implements TdlibSettingsManager.Preferenc
         text.draw(c, x, (int) top, null, statusVisibility);
       }
     }
+
+    Views.restore(c, centerSaveCount);
 
     avatarReceiver.forceAllowOnline(!isSelected.getValue(), 1f - isSelected.getFloatValue());
     layoutReceiver();

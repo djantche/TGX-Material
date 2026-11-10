@@ -1100,6 +1100,7 @@ public class MessagesManager implements Client.ResultHandler, MessagesSearchMana
 
   private void loadFromStart (MessageId fromId, TGMessage startMessage) {
     adapter.reset(startMessage);
+    controller.setMessagesSkeletonVisible(startMessage == null);
     scrollToPositionWithOffsetImpl(0, 0);
     loader.loadFromStart(fromId);
     viewMessages(false);
@@ -1108,6 +1109,7 @@ public class MessagesManager implements Client.ResultHandler, MessagesSearchMana
   private void loadFromMessage (MessageId messageId, int highlightMode, boolean force) {
     if (force) {
       adapter.reset(null);
+      controller.setMessagesSkeletonVisible(true);
     }
     loader.loadFromMessage(messageId, highlightMode, force);
     viewMessages(false);
@@ -1231,6 +1233,9 @@ public class MessagesManager implements Client.ResultHandler, MessagesSearchMana
     switch (mode) {
       case MessagesLoader.MODE_INITIAL:
       case MessagesLoader.MODE_REPEAT_INITIAL: {
+        if (!items.isEmpty() || !willRepeat) {
+          controller.setMessagesSkeletonVisible(false);
+        }
         if (mode == MessagesLoader.MODE_REPEAT_INITIAL) {
           adapter.resetMessages(items);
         } else {

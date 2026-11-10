@@ -1301,11 +1301,11 @@ public class TGChat implements TdlibStatusManager.HelperTarget, ContentPreview.R
   private int textIconsPadding;
 
   private static TextStyleProvider getTextStyleProvider (int chatListMode) {
-    return Paints.robotoStyleProvider(chatListMode == Settings.CHAT_MODE_3LINE ? 15 : 16);
+    return Paints.robotoStyleProvider(14);
   }
 
   private static TextStyleProvider getTitleStyleProvider (int chatListMode) {
-    return Paints.robotoStyleProvider(chatListMode == Settings.CHAT_MODE_3LINE ? 16 : 17);
+    return Paints.robotoStyleProvider(16);
   }
 
   public @Nullable IntList getTextIconIds () {

@@ -23,6 +23,7 @@ import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Shader;
+import android.os.Build;
 import android.os.SystemClock;
 import android.view.Gravity;
 import android.view.View;
@@ -254,6 +255,17 @@ public class DrawerController extends ViewController<Void> implements View.OnCli
       }
     };
     contentView.setVisibility(View.GONE);
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+      // Material drawer: rounded trailing corners instead of a side shadow
+      contentView.setOutlineProvider(new android.view.ViewOutlineProvider() {
+        @Override
+        public void getOutline (View view, android.graphics.Outline outline) {
+          int radius = Screen.dp(16f);
+          outline.setRoundRect(-radius, 0, view.getWidth() - shadowWidth, view.getHeight(), radius);
+        }
+      });
+      contentView.setClipToOutline(true);
+    }
     contentView.setTranslationX(-currentWidth);
     contentView.setLayoutParams(FrameLayoutFix.newParams(currentWidth, ViewGroup.LayoutParams.MATCH_PARENT, Gravity.LEFT));
     UI.setFullscreenIfNeeded(contentView);

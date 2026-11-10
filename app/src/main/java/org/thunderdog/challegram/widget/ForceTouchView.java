@@ -25,6 +25,7 @@ import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.view.Gravity;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
@@ -56,6 +57,7 @@ import org.thunderdog.challegram.navigation.ComplexHeaderView;
 import org.thunderdog.challegram.navigation.DoubleHeaderView;
 import org.thunderdog.challegram.navigation.HeaderView;
 import org.thunderdog.challegram.navigation.ViewController;
+import org.thunderdog.challegram.support.RippleSupport;
 import org.thunderdog.challegram.support.ViewSupport;
 import org.thunderdog.challegram.telegram.ChatListener;
 import org.thunderdog.challegram.telegram.DisplayInformation;
@@ -76,6 +78,8 @@ import org.thunderdog.challegram.tool.Paints;
 import org.thunderdog.challegram.tool.Screen;
 import org.thunderdog.challegram.tool.UI;
 import org.thunderdog.challegram.tool.Views;
+import org.thunderdog.challegram.ui.ChatsController;
+import org.thunderdog.challegram.ui.MessagesController;
 import org.thunderdog.challegram.unsorted.Settings;
 import org.thunderdog.challegram.util.SensitiveContentContainer;
 import org.thunderdog.challegram.util.text.Text;
@@ -124,7 +128,7 @@ public class ForceTouchView extends FrameLayoutFix implements
 
   public static final float FOOTER_HEIGHT = 48f; // 56f
   public static final float HEADER_HEIGHT = 56f;
-  private static final float RADIUS = 4f;
+  private static final float RADIUS = 24f;
 
   // private static TextPaint hintTextPaint;
 
@@ -209,6 +213,7 @@ public class ForceTouchView extends FrameLayoutFix implements
           outline.setRoundRect(Math.round(drawingRect.left), Math.round(drawingRect.top), Math.round(drawingRect.right), Math.round(drawingRect.bottom), Screen.dp(RADIUS));
         }
       });
+      contentWrap.setClipToOutline(true);
       contentWrap.setElevation(Screen.dp(1f));
       contentWrap.setTranslationZ(Screen.dp(1f));
     }
@@ -619,6 +624,54 @@ public class ForceTouchView extends FrameLayoutFix implements
 
   private ImageView lastActionView;
   private int lastActionId;
+
+  // Pinned preview: stays open after the finger is lifted, so the chat can be scrolled and actions tapped
+
+  private boolean pinned;
+
+  public boolean isPinned () {
+    return pinned;
+  }
+
+  public boolean pin (Runnable close) {
+    if (pinned || forceTouchContext == null || lastActionId != 0 || isMaximizing || forceMaximize ||
+      !(forceTouchContext.boundController instanceof MessagesController || forceTouchContext.boundController instanceof ChatsController) || forceTouchContext.boundController.wouldMaximizeFromPreview()) {
+      return false;
+    }
+    pinned = true;
+    // Swallow taps on the preview itself, a touch anywhere outside of it dismisses the window
+    contentWrap.setClickable(true);
+    setOnTouchListener((v, e) -> {
+      if (e.getActionMasked() == MotionEvent.ACTION_DOWN) {
+        boolean inside = e.getX() >= contentWrap.getLeft() && e.getX() < contentWrap.getRight() && e.getY() >= contentWrap.getTop() && e.getY() < contentWrap.getBottom();
+        if (!inside) {
+          close.run();
+          return true;
+        }
+      }
+      return false;
+    });
+    if (targetHeaderView != null && forceTouchContext.maximizeListener != null) {
+      targetHeaderView.setOnClickListener(v -> {
+        forceMaximize = true;
+        close.run();
+      });
+      RippleSupport.setTransparentSelector(targetHeaderView);
+    }
+    if (buttonsList != null) {
+      for (int i = 0; i < buttonsList.getChildCount(); i++) {
+        View view = buttonsList.getChildAt(i);
+        if (view instanceof ImageView && view.getId() != View.NO_ID) {
+          view.setOnClickListener(v -> {
+            setActionView((ImageView) v);
+            close.run();
+          });
+          RippleSupport.setTransparentSelector(view, 24f, null);
+        }
+      }
+    }
+    return true;
+  }
 
   private void setActionView (ImageView imageView) {
     if (lastActionView == imageView) {

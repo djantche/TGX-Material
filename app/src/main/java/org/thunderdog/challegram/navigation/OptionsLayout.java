@@ -19,6 +19,7 @@ import android.graphics.Canvas;
 import android.graphics.ColorFilter;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
+import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
 import android.util.TypedValue;
@@ -54,6 +55,7 @@ import org.thunderdog.challegram.widget.RootFrameLayout;
 
 import me.vkryl.android.ViewUtils;
 import me.vkryl.android.animator.Animated;
+import me.vkryl.core.ColorUtils;
 import me.vkryl.core.StringUtils;
 
 public class OptionsLayout extends LinearLayout implements Animated, RootFrameLayout.MarginModifier {
@@ -88,9 +90,19 @@ public class OptionsLayout extends LinearLayout implements Animated, RootFrameLa
       @Override
       public void draw (@NonNull Canvas c) {
         View view = getChildAt(0);
-        int height = view != null ? view.getMeasuredHeight() : 0;
-        if (height > 0)
-          c.drawRect(0, height, getMeasuredWidth(), getMeasuredHeight(), Paints.fillingPaint(forcedTheme != null ? forcedTheme.getColor(ColorId.filling) : Theme.getColor(ColorId.filling)));
+        int height = view != null && view.getVisibility() != View.GONE ? view.getMeasuredHeight() : 0;
+        if (height < getMeasuredHeight()) {
+          // Material bottom sheet: rounded top corners and a drag handle
+          int fillingColor = forcedTheme != null ? forcedTheme.getColor(ColorId.filling) : Theme.getColor(ColorId.filling);
+          int handleColor = forcedTheme != null ? forcedTheme.getColor(ColorId.iconLight) : Theme.getColor(ColorId.iconLight);
+          float radius = Screen.dp(28f);
+          RectF rectF = Paints.getRectF();
+          rectF.set(0, height, getMeasuredWidth(), getMeasuredHeight() + radius);
+          c.drawRoundRect(rectF, radius, radius, Paints.fillingPaint(fillingColor));
+          int handleWidth = Screen.dp(32f), handleHeight = Screen.dp(4f), handleTop = height + Screen.dp(8f);
+          rectF.set(getMeasuredWidth() / 2f - handleWidth / 2f, handleTop, getMeasuredWidth() / 2f + handleWidth / 2f, handleTop + handleHeight);
+          c.drawRoundRect(rectF, handleHeight / 2f, handleHeight / 2f, Paints.fillingPaint(ColorUtils.alphaColor(.4f, handleColor)));
+        }
       }
 
       @Override

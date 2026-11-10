@@ -558,6 +558,20 @@ public class Theme {
     }
   }
 
+  public static Drawable fillingSelector (@ColorId int backgroundColorId, float topRadius, float bottomRadius) {
+    FillingDrawable content = new FillingDrawable(backgroundColorId, topRadius, bottomRadius);
+    if (Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP) {
+      float top = Screen.dp(topRadius), bottom = Screen.dp(bottomRadius);
+      ShapeDrawable mask = new ShapeDrawable(new RoundRectShape(new float[] {top, top, top, top, bottom, bottom, bottom, bottom}, null, null));
+      mask.getPaint().setColor(0xFFFFFFFF);
+      return new android.graphics.drawable.RippleDrawable(
+        new ColorStateList(new int[][] {StateSet.WILD_CARD}, new int[] {RIPPLE_COLOR}),
+        content, mask
+      );
+    }
+    return content;
+  }
+
   @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
   private static Drawable fillingRippleSelector (@ColorId int backgroundColorId, float radius) {
     return new android.graphics.drawable.RippleDrawable(
@@ -948,7 +962,7 @@ public class Theme {
   }
 
   public static boolean isBubbleRadiusBig (float radius) {
-    return BUBBLE_BIG_RADIUS_AVAILABLE && radius == Screen.dp(18f);
+    return BUBBLE_BIG_RADIUS_AVAILABLE && radius >= Screen.dp(18f);
   }
 
   public static int subtitleColor (int color) {

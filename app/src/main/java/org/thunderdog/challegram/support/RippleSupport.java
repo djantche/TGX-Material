@@ -14,7 +14,9 @@
  */
 package org.thunderdog.challegram.support;
 
+import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.InsetDrawable;
 import android.graphics.drawable.LayerDrawable;
 import android.os.Build;
 import android.view.View;
@@ -25,6 +27,7 @@ import androidx.annotation.Nullable;
 import org.thunderdog.challegram.navigation.ViewController;
 import org.thunderdog.challegram.theme.ColorId;
 import org.thunderdog.challegram.theme.Theme;
+import org.thunderdog.challegram.tool.Screen;
 import org.thunderdog.challegram.tool.Views;
 import org.thunderdog.challegram.util.ColorChangeAcceptorDelegate;
 import org.thunderdog.challegram.util.CustomStateListDrawable;
@@ -68,6 +71,18 @@ public class RippleSupport {
     if (themeProvider != null) {
       themeProvider.addThemeInvalidateListener(view);
     }
+  }
+
+  // Material navigation item: the pressed state is a pill inset from the row edges
+  public static void setInsetPillSelector (View view) {
+    int horizontalInset = Screen.dp(12f), verticalInset = Screen.dp(2f);
+    ViewUtils.setBackground(view, new InsetDrawable(Theme.transparentRoundSelector(26f), horizontalInset, verticalInset, horizontalInset, verticalInset) {
+      @Override
+      public boolean getPadding (@NonNull Rect padding) {
+        padding.setEmpty();
+        return false;
+      }
+    });
   }
 
   public static void setTransparentBlackSelector (View view) {

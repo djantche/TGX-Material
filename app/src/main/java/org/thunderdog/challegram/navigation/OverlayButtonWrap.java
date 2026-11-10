@@ -36,6 +36,7 @@ import androidx.annotation.NonNull;
 import androidx.core.content.res.ResourcesCompat;
 
 import org.thunderdog.challegram.core.Lang;
+import org.thunderdog.challegram.R;
 import org.thunderdog.challegram.support.RippleSupport;
 import org.thunderdog.challegram.theme.ColorId;
 import org.thunderdog.challegram.theme.Theme;
@@ -92,6 +93,7 @@ public class OverlayButtonWrap extends FrameLayoutFix implements View.OnClickLis
   public void replaceMainButton (@IdRes int id, @DrawableRes int icon) {
     mainButton.setId(id);
     mainButton.replaceIcon(icon);
+    mainButton.setContentDescription(Lang.getString(id == R.id.btn_float_call ? R.string.Calls : id == R.id.btn_float_addContact ? R.string.AddContact : R.string.NewChat));
   }
 
   // Views
@@ -107,6 +109,17 @@ public class OverlayButtonWrap extends FrameLayoutFix implements View.OnClickLis
 
     button = new CircleButton(getContext());
     button.init(resource, 56f, 4f, circleColorId, iconColorId);
+    RippleSupport.setSimpleWhiteBackground(button, circleColorId, 16f, parent);
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+      button.setOutlineProvider(new android.view.ViewOutlineProvider() {
+        @Override
+        public void getOutline (View view, android.graphics.Outline outline) {
+          outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), Screen.dp(16f));
+        }
+      });
+    }
+    button.setFocusable(true);
+    button.setContentDescription(Lang.getString(R.string.NewChat));
     button.setCrossColorId(overlayColorId, overlayIconColorId);
     button.setId(id);
     button.setOnClickListener(this);

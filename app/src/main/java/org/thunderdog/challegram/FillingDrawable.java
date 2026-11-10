@@ -16,6 +16,7 @@ package org.thunderdog.challegram;
 
 import android.graphics.Canvas;
 import android.graphics.ColorFilter;
+import android.graphics.Path;
 import android.graphics.PixelFormat;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
@@ -48,6 +49,15 @@ public class FillingDrawable extends Drawable {
   public FillingDrawable (int colorId, float radius) {
     this.colorId = colorId;
     this.cornerRadius = radius;
+  }
+
+  private float bottomCornerRadius = -1f;
+  private Path cornerPath;
+
+  public FillingDrawable (int colorId, float topRadius, float bottomRadius) {
+    this.colorId = colorId;
+    this.cornerRadius = topRadius;
+    this.bottomCornerRadius = bottomRadius;
   }
 
   public final void setForcedTheme (ThemeDelegate forcedTheme) {
@@ -90,7 +100,17 @@ public class FillingDrawable extends Drawable {
   @Override
   public final void draw (@NonNull Canvas c) {
     if (colorId != 0) {
-      if (cornerRadius != 0) {
+      if (bottomCornerRadius >= 0f && bottomCornerRadius != cornerRadius) {
+        if (cornerPath == null) {
+          cornerPath = new Path();
+        }
+        float top = Screen.dp(cornerRadius), bottom = Screen.dp(bottomCornerRadius);
+        RectF rectF = Paints.getRectF();
+        rectF.set(getBounds());
+        cornerPath.reset();
+        cornerPath.addRoundRect(rectF, new float[] {top, top, top, top, bottom, bottom, bottom, bottom}, Path.Direction.CW);
+        c.drawPath(cornerPath, Paints.fillingPaint(getFillingColor()));
+      } else if (cornerRadius != 0) {
         RectF rectF = Paints.getRectF();
         rectF.set(getBounds());
         float radius = Screen.dp(cornerRadius);

@@ -131,6 +131,10 @@ public class SendButton extends View implements FactorAnimator.Target, TooltipOv
     final float editFactor = inEditModeAnimator.getFloatValue();
 
     if (sendScale > 0f) {
+      c.drawCircle(cx, cy, Screen.dp(22f), Paints.fillingPaint(ColorUtils.alphaColor(sendScale, Theme.getColor(ColorId.circleButtonRegular))));
+    }
+
+    if (sendScale > 0f) {
       if (editFactor != 1f) {
         final Paint paint = Paints.getSendButtonPaint();
         final Paint paintBg = PorterDuffPaint.get(ColorId.iconLight);

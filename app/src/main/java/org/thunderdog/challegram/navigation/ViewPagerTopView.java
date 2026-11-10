@@ -23,6 +23,7 @@ import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
+import android.graphics.RectF;
 import android.graphics.Shader;
 import android.graphics.drawable.Drawable;
 import android.os.SystemClock;
@@ -400,6 +401,15 @@ public class ViewPagerTopView extends FrameLayoutFix implements RtlCheckListener
 
   public boolean isDrawSelectionAtTop () {
     return drawSelectionAtTop;
+  }
+
+  private boolean pillSelection;
+
+  public void setPillSelection (boolean pillSelection) {
+    if (this.pillSelection != pillSelection) {
+      this.pillSelection = pillSelection;
+      invalidate();
+    }
   }
 
   private boolean showLabelOnActiveOnly;
@@ -1078,7 +1088,16 @@ public class ViewPagerTopView extends FrameLayoutFix implements RtlCheckListener
       int selectionTop = this.drawSelectionAtTop ? 0 : viewHeight - selectionHeight;
       int selectionBottom = selectionTop + selectionHeight;
 
-      c.drawRect(selectionLeft, selectionTop, selectionRight, selectionBottom, Paints.fillingPaint(disabledFactor == 0f ? selectionColor : ColorUtils.fromToArgb(selectionColor, textFromColor, disabledFactor)));
+      Paint selectionPaint = Paints.fillingPaint(disabledFactor == 0f ? selectionColor : ColorUtils.fromToArgb(selectionColor, textFromColor, disabledFactor));
+      if (pillSelection) {
+        int pillHeight = Math.min(viewHeight - Screen.dp(16f), Screen.dp(36f));
+        int pillInset = Math.max(0, itemPadding - Screen.dp(14f));
+        RectF pillRect = Paints.getRectF();
+        pillRect.set(selectionLeft + pillInset, (viewHeight - pillHeight) / 2f, selectionRight - pillInset, (viewHeight + pillHeight) / 2f);
+        c.drawRoundRect(pillRect, pillHeight / 2f, pillHeight / 2f, selectionPaint);
+      } else {
+        c.drawRect(selectionLeft, selectionTop, selectionRight, selectionBottom, selectionPaint);
+      }
 
       int cx = rtl ? totalWidth : 0;
       int itemIndex = 0;

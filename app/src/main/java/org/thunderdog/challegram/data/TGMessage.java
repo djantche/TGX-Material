@@ -7962,14 +7962,14 @@ public abstract class TGMessage implements InvalidateContentProvider, TdlibDeleg
     xDatePadding = Screen.dp(40f);
     xDateTop = Screen.dp(26f);
 
-    xBubblePadding = Screen.dp(8f);
+    xBubblePadding = Screen.dp(10f);
     xReactionBubblePadding = Screen.dp(10f);
     xReactionBubblePaddingTop = Screen.dp(9f);
     xReactionBubblePaddingBottom = Screen.dp(10f);
     xBubblePaddingSmall = Screen.dp(2f);
     xBubbleAvatarRadius = Screen.dp(BUBBLE_AVATAR_RADIUS);
-    xBubbleLeft1 = Screen.dp(8f);
-    xBubbleLeft2 = Screen.dp(9f);
+    xBubbleLeft1 = Screen.dp(12f);
+    xBubbleLeft2 = Screen.dp(13f);
     xBubbleAvatarLeft = Screen.dp(6f);
 
     xBubbleViewPadding = Screen.dp(3f);

@@ -551,13 +551,15 @@ public class ChatsController extends TelegramViewController<ChatsController.Argu
         if (dragFrom == -1) {
           dragFrom = fromPosition;
         }
+        if (!adapter.movePinnedChat(fromPosition, toPosition)) {
+          return false;
+        }
         dragTo = toPosition;
-        adapter.movePinnedChat(fromPosition, toPosition);
         if (dragTooltip != null) {
           dragTooltip.hideNow();
         }
 
-        return false;
+        return true;
       }
 
       @Override

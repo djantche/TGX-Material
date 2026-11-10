@@ -25,6 +25,7 @@ import android.content.res.Configuration;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Rect;
+import android.graphics.drawable.InsetDrawable;
 import android.location.Location;
 import android.location.LocationManager;
 import android.media.MediaMetadataRetriever;
@@ -78,6 +79,7 @@ import org.drinkless.tdlib.Client;
 import org.drinkless.tdlib.TdApi;
 import org.thunderdog.challegram.BaseActivity;
 import org.thunderdog.challegram.BuildConfig;
+import org.thunderdog.challegram.FillingDrawable;
 import org.thunderdog.challegram.Log;
 import org.thunderdog.challegram.MainActivity;
 import org.thunderdog.challegram.R;
@@ -246,6 +248,7 @@ import org.thunderdog.challegram.widget.ForceTouchView;
 import org.thunderdog.challegram.widget.KeyboardFrameLayout;
 import org.thunderdog.challegram.widget.NoScrollTextView;
 import org.thunderdog.challegram.widget.PopupLayout;
+import org.thunderdog.challegram.widget.MessagesSkeletonView;
 import org.thunderdog.challegram.widget.ProgressComponentView;
 import org.thunderdog.challegram.widget.RippleRevealView;
 import org.thunderdog.challegram.widget.SendButton;
@@ -337,6 +340,29 @@ public class MessagesController extends ViewController<MessagesController.Argume
   private LinearLayout bottomWrap;
   private FillingSpace bottomSpace;
   private MessagesRecyclerView messagesView;
+  private MessagesSkeletonView messagesSkeleton;
+
+  private final Runnable showMessagesSkeleton = () -> {
+    if (messagesSkeleton != null) {
+      messagesSkeleton.setSkeletonVisible(true, true);
+    }
+  };
+  private final Runnable hideMessagesSkeleton = () -> setMessagesSkeletonVisible(false);
+
+  // Shown only when loading takes noticeable time, so cached chats open without a flash
+  public void setMessagesSkeletonVisible (boolean visible) {
+    if (messagesSkeleton == null) {
+      return;
+    }
+    messagesSkeleton.removeCallbacks(showMessagesSkeleton);
+    messagesSkeleton.removeCallbacks(hideMessagesSkeleton);
+    if (visible) {
+      messagesSkeleton.postDelayed(showMessagesSkeleton, 180L);
+      messagesSkeleton.postDelayed(hideMessagesSkeleton, 10000L);
+    } else {
+      messagesSkeleton.setSkeletonVisible(false, true);
+    }
+  }
 
   private final MessagesManager manager;
   private BotHelper botHelper;
@@ -799,7 +825,18 @@ public class MessagesController extends ViewController<MessagesController.Argume
       addThemeHintTextColorListener(inputView, ColorId.textPlaceholder);
       inputView.setLinkTextColor(Theme.textLinkColor());
       addThemeLinkTextColorListener(inputView, ColorId.textLink);
-      ViewSupport.setThemedBackground(inputView, ColorId.filling, this);
+      inputView.setBackground(new InsetDrawable(
+        new FillingDrawable(ColorId.chatKeyboard, 28f),
+        Screen.dp(8f), Screen.dp(4f), Screen.dp(8f), Screen.dp(4f)
+      ) {
+        @Override
+        public boolean getPadding (Rect padding) {
+          // The inset only shapes the pill, it must not override InputView's own text padding
+          padding.setEmpty();
+          return false;
+        }
+      });
+      addThemeInvalidateListener(inputView);
       inputView.setHighlightColor(Theme.fillingTextSelectionColor());
       addThemeHighlightColorListener(inputView, ColorId.textSelectionHighlight);
       bindLocaleChanger(inputView.setController(this));
@@ -1460,6 +1497,11 @@ public class MessagesController extends ViewController<MessagesController.Argume
     contentView.addView(bottomSpace);
     contentView.addView(bottomWrap);
     contentView.addView(messagesView);
+    messagesSkeleton = new MessagesSkeletonView(context);
+    messagesSkeleton.setAnchor(messagesView);
+    messagesSkeleton.setVisibility(View.GONE);
+    contentView.addView(messagesSkeleton, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+    addThemeInvalidateListener(messagesSkeleton);
     contentView.addView(bottomShadowView);
 
     contentView.addView(topBar);

@@ -108,6 +108,7 @@ import org.thunderdog.challegram.telegram.TdlibOptionListener;
 import org.thunderdog.challegram.telegram.TdlibSettingsManager;
 import org.thunderdog.challegram.telegram.TdlibUi;
 import org.thunderdog.challegram.theme.ColorId;
+import org.thunderdog.challegram.theme.ColorState;
 import org.thunderdog.challegram.theme.PropertyId;
 import org.thunderdog.challegram.theme.Theme;
 import org.thunderdog.challegram.tool.Drawables;
@@ -129,6 +130,7 @@ import org.thunderdog.challegram.util.text.IconSpan;
 import org.thunderdog.challegram.util.text.TextColorSet;
 import org.thunderdog.challegram.widget.BubbleLayout;
 import org.thunderdog.challegram.widget.FillingSpace;
+import org.thunderdog.challegram.widget.MaterialNavigationBar;
 import org.thunderdog.challegram.widget.PopupLayout;
 import org.thunderdog.challegram.widget.ShadowView;
 import org.thunderdog.challegram.widget.SnackBar;
@@ -181,6 +183,56 @@ public class MainController extends ViewPagerController<Void> implements Menu, M
   private FrameLayoutFix mainWrap;
   private FrameLayoutFix pagerWrap;
   private OverlayButtonWrap composeWrap;
+  private MaterialNavigationBar materialNavigation;
+  private TextView materialSearchHeader;
+
+  private void openMaterialDestination (int destination) {
+    if (inSearchMode()) {
+      return;
+    }
+    switch (destination) {
+      case 0:
+        int chatsPosition = hasFolders() ? getPagerItemPosition(MAIN_PAGER_ITEM_ID) : POSITION_CHATS;
+        setCurrentPagerPosition(chatsPosition != NO_POSITION ? chatsPosition : 0, true);
+        break;
+      case 1:
+        if (hasFolders()) {
+          navigateTo(new CallListController(context, tdlib));
+        } else {
+          setCurrentPagerPosition(POSITION_CALLS, true);
+        }
+        break;
+      case 2:
+        ContactsController contacts = new ContactsController(context, tdlib);
+        contacts.initWithMode(ContactsController.MODE_NEW_CHAT);
+        navigateTo(contacts);
+        break;
+      case 3:
+        navigateTo(new SettingsController(context, tdlib));
+        break;
+      default:
+        throw new IllegalArgumentException("destination=" + destination);
+    }
+  }
+
+  @Override
+  public void onThemeColorsChanged (boolean areTemp, ColorState state) {
+    super.onThemeColorsChanged(areTemp, state);
+    if (materialNavigation != null) {
+      materialNavigation.updateColors();
+    }
+  }
+
+  @Override
+  public void handleLanguagePackEvent (int event, int arg1) {
+    super.handleLanguagePackEvent(event, arg1);
+    if (materialNavigation != null) {
+      materialNavigation.refresh();
+    }
+    if (materialSearchHeader != null) {
+      materialSearchHeader.setText(Lang.getString(R.string.Search));
+    }
+  }
 
   @Override
   protected View onCreateView (Context context) {
@@ -197,6 +249,12 @@ public class MainController extends ViewPagerController<Void> implements Menu, M
     Views.setPaddingBottom(updateSnackBar, extraBottomInsetWithoutIme);
     updateBottomBarMargins();
     checkMargins();
+    if (materialNavigation != null) {
+      materialNavigation.setPadding(0, 0, 0, extraBottomInsetWithoutIme);
+      ViewGroup.LayoutParams params = materialNavigation.getLayoutParams();
+      params.height = Screen.dp(MaterialNavigationBar.HEIGHT) + extraBottomInsetWithoutIme;
+      materialNavigation.setLayoutParams(params);
+    }
   }
 
   private void updateBottomBarMargins () {
@@ -263,6 +321,12 @@ public class MainController extends ViewPagerController<Void> implements Menu, M
       }, false);
     composeWrap.setCallback(this);
     contentView.addView(composeWrap);
+
+    materialNavigation = new MaterialNavigationBar(context, this::openMaterialDestination);
+    materialNavigation.setPadding(0, 0, 0, extraBottomInsetWithoutIme);
+    contentView.addView(materialNavigation, FrameLayoutFix.newParams(ViewGroup.LayoutParams.MATCH_PARENT, Screen.dp(MaterialNavigationBar.HEIGHT) + extraBottomInsetWithoutIme, Gravity.BOTTOM));
+    Views.setBottomMargin(mainWrap, Screen.dp(MaterialNavigationBar.HEIGHT));
+    checkComposeWrapPaddings();
 
     makeStartupChecks();
 
@@ -381,6 +445,9 @@ public class MainController extends ViewPagerController<Void> implements Menu, M
 
   @Override
   public CharSequence getName () {
+    if (!hasFolders() && materialNavigation != null && materialNavigation.getSelectedDestination() == 1) {
+      return Lang.getString(R.string.Calls);
+    }
     if (useGlobalFilter()) {
       return Lang.getString(getGlobalFilterName(globalFilter));
     }
@@ -391,6 +458,25 @@ public class MainController extends ViewPagerController<Void> implements Menu, M
 
   @Override
   public View getCustomHeaderCell () {
+    if (!hasFolders()) {
+      if (materialSearchHeader == null) {
+        materialSearchHeader = new TextView(context);
+        materialSearchHeader.setText(Lang.getString(R.string.Search));
+        materialSearchHeader.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f);
+        materialSearchHeader.setTypeface(Fonts.getRobotoRegular());
+        materialSearchHeader.setTextColor(Theme.getColor(ColorId.textLight));
+        materialSearchHeader.setGravity(Gravity.CENTER_VERTICAL);
+        materialSearchHeader.setPadding(Screen.dp(20f), 0, Screen.dp(20f), 0);
+        materialSearchHeader.setSingleLine(true);
+        materialSearchHeader.setEllipsize(TextUtils.TruncateAt.END);
+        materialSearchHeader.setFocusable(true);
+        materialSearchHeader.setOnClickListener(view -> onMenuItemPressed(R.id.menu_btn_search, view));
+        materialSearchHeader.setLayoutParams(FrameLayoutFix.newParams(ViewGroup.LayoutParams.MATCH_PARENT, Screen.dp(48f), Gravity.TOP, Screen.dp(56f), Screen.dp(4f), Screen.dp(56f), 0));
+        RippleSupport.setSimpleWhiteBackground(materialSearchHeader, ColorId.chatKeyboard, 28f, this);
+        addThemeTextColorListener(materialSearchHeader, ColorId.textLight);
+      }
+      return materialSearchHeader;
+    }
     if (displayTabsAtBottom()) {
       if (useGlobalFilter()) {
         if (toggleHeaderView == null) {
@@ -797,12 +883,16 @@ public class MainController extends ViewPagerController<Void> implements Menu, M
   protected void onEnterSearchMode () {
     super.onEnterSearchMode();
     composeWrap.forceHide();
+    materialNavigation.setVisibility(View.GONE);
+    Views.setBottomMargin(mainWrap, 0);
   }
 
   @Override
   protected void onLeaveSearchMode () {
     super.onLeaveSearchMode();
     composeWrap.showIfWasHidden();
+    materialNavigation.setVisibility(View.VISIBLE);
+    Views.setBottomMargin(mainWrap, Screen.dp(MaterialNavigationBar.HEIGHT));
   }
 
   /*@Override
@@ -959,6 +1049,10 @@ public class MainController extends ViewPagerController<Void> implements Menu, M
 
   @Override
   public void onPageSelected (int position, int actualPosition) {
+    if (materialNavigation != null) {
+      materialNavigation.setSelectedDestination(!hasFolders() && position == POSITION_CALLS ? 1 : 0);
+      setName(getName());
+    }
     if (!inSearchMode()) {
       composeWrap.show();
     }
@@ -1013,7 +1107,7 @@ public class MainController extends ViewPagerController<Void> implements Menu, M
 
   private void checkComposeWrapPaddings () {
     if (composeWrap != null) {
-      int paddingBottom = (displayTabsAtBottom() ? getHeaderHeight() : 0) + extraBottomInsetWithoutIme;
+      int paddingBottom = Screen.dp(MaterialNavigationBar.HEIGHT) + (displayTabsAtBottom() ? getHeaderHeight() : 0) + extraBottomInsetWithoutIme;
       composeWrap.setPadding(composeWrap.getPaddingLeft(), composeWrap.getPaddingTop(), composeWrap.getPaddingRight(), paddingBottom);
       composeWrap.setClipToPadding(paddingBottom == 0);
     }
@@ -1298,6 +1392,9 @@ public class MainController extends ViewPagerController<Void> implements Menu, M
   @Override
   public void onFocus () {
     super.onFocus();
+    if (materialNavigation != null) {
+      materialNavigation.refresh();
+    }
     // FIXME check tdlib.isUnauthorized()
     tdlib.context().changePreferredAccountId(tdlib.id(), TdlibManager.SWITCH_REASON_NAVIGATION);
     if (UI.TEST_MODE == UI.TEST_MODE_USER) {
@@ -1586,7 +1683,7 @@ public class MainController extends ViewPagerController<Void> implements Menu, M
     boolean showAsArchive = (isMain && menuNeedArchive) || isArchive;
     if (hasFolders) {
       String source;
-      boolean iconOnly = chatFolderStyle == ChatFolderStyle.ICON_ONLY || (isMain && pagerItemPosition == 0);
+      boolean iconOnly = chatFolderStyle == ChatFolderStyle.ICON_ONLY || (isMain && pagerItemPosition == 0 && chatFolderStyle != ChatFolderStyle.LABEL_ONLY);
       if (iconOnly) {
         source = "";
       } else if (showAsArchive) {
@@ -2779,7 +2876,12 @@ public class MainController extends ViewPagerController<Void> implements Menu, M
     headerCell.getTopView().setUseDarkBackground(displayTabsAtBottom);
     headerCell.getTopView().setDrawSelectionAtTop(displayTabsAtBottom);
     headerCell.getTopView().setSlideOffDirection(displayTabsAtBottom ? ViewPagerTopView.SLIDE_OFF_DIRECTION_TOP : ViewPagerTopView.SLIDE_OFF_DIRECTION_BOTTOM);
-    headerCell.getTopView().setItemPadding(Screen.dp(hasFolders ? ViewPagerTopView.COMPACT_ITEM_PADDING : ViewPagerTopView.DEFAULT_ITEM_PADDING));
+    headerCell.getTopView().setItemPadding(Screen.dp(hasFolders ? (displayTabsAtBottom ? ViewPagerTopView.COMPACT_ITEM_PADDING : 14f) : ViewPagerTopView.DEFAULT_ITEM_PADDING));
+    headerCell.getTopView().setPillSelection(!displayTabsAtBottom);
+    if (!displayTabsAtBottom) {
+      headerCell.getTopView().setSelectionColorId(ColorId.circleButtonTheme);
+      headerCell.getTopView().setTextFromToColorId(ColorId.headerTabInactiveText, ColorId.circleButtonThemeIcon);
+    }
     headerCell.getTopView().setItemSpacing(Screen.dp(hasFolders ? ViewPagerTopView.COMPACT_ITEM_SPACING : ViewPagerTopView.DEFAULT_ITEM_SPACING));
     headerCellView.setFadingEdgeLength(displayTabsAtBottom ? 0f : 16f);
 
@@ -2994,7 +3096,7 @@ public class MainController extends ViewPagerController<Void> implements Menu, M
       TdlibCounter counter = tdlib.getCounter(chatList);
       updateCounter(chatList, unreadCounter, counter, /* animated */ false);
     }
-    boolean showIcon = hasIcon(chatFolderStyle) || (pagerItemId == MAIN_PAGER_ITEM_ID && pagerItemPosition == 0);
+    boolean showIcon = hasIcon(chatFolderStyle) || (pagerItemId == MAIN_PAGER_ITEM_ID && pagerItemPosition == 0 && chatFolderStyle != ChatFolderStyle.LABEL_ONLY);
     if (!showIcon) {
       iconResource = ResourcesCompat.ID_NULL;
     }

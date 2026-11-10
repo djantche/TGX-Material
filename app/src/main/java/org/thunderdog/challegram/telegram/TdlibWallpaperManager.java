@@ -19,9 +19,12 @@ import androidx.annotation.Nullable;
 import androidx.collection.SparseArrayCompat;
 
 import org.drinkless.tdlib.TdApi;
+import org.thunderdog.challegram.theme.MaterialTheme;
 import org.thunderdog.challegram.theme.TGBackground;
 import org.thunderdog.challegram.theme.Theme;
+import org.thunderdog.challegram.theme.ThemeDelegate;
 import org.thunderdog.challegram.theme.ThemeId;
+import org.thunderdog.challegram.theme.ThemeSet;
 import org.thunderdog.challegram.tool.UI;
 
 import java.util.ArrayList;
@@ -43,8 +46,24 @@ public class TdlibWallpaperManager {
   }
 
   public void ensureWallpaperAvailability () {
+    dropLegacyDefaultWallpaper(tdlib.settings().globalDaylightTheme());
+    dropLegacyDefaultWallpaper(tdlib.settings().globalNightTheme());
     fetchBackground(tdlib.settings().globalDaylightTheme(), false);
     fetchBackground(tdlib.settings().globalNightTheme(), false);
+  }
+
+  // Material themes use a plain surface: replace the pattern inherited from the original theme, keep any wallpaper the user picked
+  private void dropLegacyDefaultWallpaper (@ThemeId int themeId) {
+    ThemeDelegate theme = ThemeSet.getOrLoadTheme(themeId, true);
+    if (!(theme instanceof MaterialTheme)) {
+      return;
+    }
+    String legacyWallpaper = ((MaterialTheme) theme).getLegacyDefaultWallpaper();
+    int usageIdentifier = Theme.getWallpaperIdentifier(themeId);
+    TGBackground currentBackground = tdlib.settings().getWallpaper(usageIdentifier, true);
+    if (!StringUtils.isEmpty(legacyWallpaper) && currentBackground != null && legacyWallpaper.equals(extractWallpaperName(currentBackground.getName()))) {
+      tdlib.settings().setWallpaper(TGBackground.newEmptyWallpaper(tdlib), true, usageIdentifier);
+    }
   }
 
   private boolean needLoadWallpaper (@ThemeId int themeId) {

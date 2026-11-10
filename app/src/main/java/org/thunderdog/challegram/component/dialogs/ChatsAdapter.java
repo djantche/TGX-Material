@@ -578,22 +578,25 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsViewHolder> {
     return count;
   }
 
-  public void movePinnedChat (int fromPosition, int toPosition) {
+  // Moves the dragged pinned chat locally, so neighbours make room immediately; the order is sent once dropped
+  public boolean movePinnedChat (int fromPosition, int toPosition) {
     TGChat fromChat = getChatByItemPosition(fromPosition);
     TGChat toChat = getChatByItemPosition(toPosition);
     if (fromChat == null || !fromChat.isPinned() || toChat == null || !toChat.isPinned()) {
-      return;
+      return false;
     }
-    ArrayList<Long> chatIds = new ArrayList<>();
-    int promotedCount = getHeaderChatCount(true, chatIds);
-    promotedCount -= chatIds.size();
     int fromIndex = getChatIndexByItemPosition(fromPosition);
     int toIndex = getChatIndexByItemPosition(toPosition);
-    ArrayUtils.move(chatIds, fromIndex - promotedCount, toIndex - promotedCount);
-    context.tdlib().send(new TdApi.SetPinnedChats(context.chatList(), ArrayUtils.asArray(chatIds)), context.tdlib().typedOkHandler());
+    ArrayUtils.move(chats, fromIndex, toIndex);
+    notifyItemMoved(fromPosition, toPosition);
+    return true;
   }
 
-  public void savePinnedChats () { }
+  public void savePinnedChats () {
+    ArrayList<Long> chatIds = new ArrayList<>();
+    getHeaderChatCount(true, chatIds);
+    context.tdlib().send(new TdApi.SetPinnedChats(context.chatList(), ArrayUtils.asArray(chatIds)), context.tdlib().typedOkHandler());
+  }
 
   public int refreshLastMessage (long chatId, long messageId, boolean needRebuild) {
     int index = indexOfChat(chatId);
